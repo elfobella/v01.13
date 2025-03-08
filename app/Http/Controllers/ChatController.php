@@ -130,7 +130,7 @@ class ChatController extends Controller
     }
 
     /**
-     * Mesaj gönder
+     * Sohbete yeni mesaj gönder
      */
     public function sendMessage(Request $request, Chat $chat)
     {
@@ -174,7 +174,12 @@ class ChatController extends Controller
             }
         })->afterResponse();
         
-        return response()->json($message);
+        // AJAX veya JSON isteği ise JSON yanıt dön, değilse sohbet sayfasına yönlendir
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json($message);
+        }
+        
+        return redirect()->route('chat.show', $chat->id);
     }
 
     /**
@@ -193,7 +198,12 @@ class ChatController extends Controller
             ->where('is_read', false)
             ->update(['is_read' => true]);
         
-        return response()->json(['success' => true]);
+        // AJAX veya JSON isteği ise JSON yanıt dön, değilse önceki sayfaya yönlendir
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+        
+        return redirect()->back();
     }
 
     /**
@@ -222,7 +232,12 @@ class ChatController extends Controller
             }
         }
         
-        return response()->json(['success' => true]);
+        // AJAX veya XHR isteği ise JSON yanıt dön, değilse önceki sayfaya yönlendir
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+        
+        return redirect()->back();
     }
     
     /**

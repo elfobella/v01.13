@@ -26,7 +26,7 @@ class NotificationController extends Controller
     }
 
     /**
-     * Bildirimi okundu olarak işaretle
+     * Bir bildirimi okundu olarak işaretle
      */
     public function markAsRead(Notification $notification)
     {
@@ -37,7 +37,12 @@ class NotificationController extends Controller
         
         $notification->update(['is_read' => true]);
         
-        return response()->json(['success' => true]);
+        // AJAX veya JSON isteği ise JSON yanıt dön, değilse önceki sayfaya yönlendir
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+        
+        return redirect()->back();
     }
 
     /**
@@ -45,15 +50,21 @@ class NotificationController extends Controller
      */
     public function markAllAsRead()
     {
+        // Kullanıcının tüm okunmamış bildirimlerini okundu olarak işaretle
         Auth::user()->notifications()
             ->where('is_read', false)
             ->update(['is_read' => true]);
         
-        return response()->json(['success' => true]);
+        // AJAX veya JSON isteği ise JSON yanıt dön, değilse önceki sayfaya yönlendir
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+        
+        return redirect()->back();
     }
 
     /**
-     * Belirli bir sohbetle ilgili tüm bildirimleri okundu olarak işaretle
+     * Belirli bir sohbete ait bildirimleri okundu olarak işaretle
      */
     public function markChatNotificationsAsRead(Request $request, $chatId)
     {
@@ -64,10 +75,15 @@ class NotificationController extends Controller
             ->where('related_id', $chatId)
             ->update(['is_read' => true]);
         
-        return response()->json([
-            'success' => true,
-            'marked_count' => $updatedCount
-        ]);
+        // AJAX veya JSON isteği ise JSON yanıt dön, değilse önceki sayfaya yönlendir
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'marked_count' => $updatedCount
+            ]);
+        }
+        
+        return redirect()->back();
     }
 
     /**
