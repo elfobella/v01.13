@@ -1,83 +1,96 @@
 import axios from 'axios';
+import _ from 'lodash';
+
+window._ = _;
+
+// Aktif sohbet ID'si için global değişken
+window.activeChatId = null;
+
+/**
+ * Axios HTTP kütüphanesini kurulumu ve yapılandırması
+ */
 window.axios = axios;
+window.axios.defaults.baseURL = import.meta.env.VITE_APP_URL || 'http://localhost:8000';
+window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+window.axios.defaults.withCredentials = true;
 
-// Axios'un base URL'sini ayarla
-window.axios.defaults.baseURL = 'http://localhost:8000';
-
-// Axios'u optimize et - Sadece gerekli başlıkları ve özellikleri etkinleştir
-axios.defaults.withCredentials = true; // Cookie'leri gönder
-axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-
-// CSRF token için basit ayar
+// CSRF token ayarları
 const token = document.head.querySelector('meta[name="csrf-token"]');
-
 if (token) {
     window.axios.defaults.headers.common['X-CSRF-TOKEN'] = token.content;
 } else {
-    console.error('CSRF token not found: https://laravel.com/docs/csrf#csrf-x-csrf-token');
+    console.error('CSRF token bulunamadı: https://laravel.com/docs/csrf#csrf-x-csrf-token');
 }
 
-// Axios timeout değerini artır
-axios.defaults.timeout = 30000; // 30 saniye
+// Axios istek zaman aşımı süresi (ms)
+window.axios.defaults.timeout = 30000;
 
-// İstek önbelleği - aynı GET isteklerinin önbelleklenmesi
+// GET istekleri için önbellek sistemi
 const cache = new Map();
+const cacheTime = 5 * 60 * 1000; // 5 dakika
 
-// Axios istek önbellekleme - performans için
-const axiosGet = axios.get;
-axios.get = async function(...args) {
-    const cacheKey = JSON.stringify(args);
-    
-    // Önbellekte varsa ve 5 dakikadan eski değilse önbellekten döndür
-    if (cache.has(cacheKey)) {
-        const cachedResponse = cache.get(cacheKey);
-        const cacheAge = Date.now() - cachedResponse.timestamp;
+window.axios.interceptors.request.use(config => {
+    // Sadece GET istekleri için önbellek kullan
+    if (config.method === 'get') {
+        const url = config.url + JSON.stringify(config.params || {});
+        const cachedResponse = cache.get(url);
         
-        if (cacheAge < 300000) { // 5 dakika (300000 ms)
-            return Promise.resolve(cachedResponse.data);
+        if (cachedResponse && Date.now() - cachedResponse.timestamp < cacheTime) {
+            // Cache'den yanıt döndür ve isteği iptal et
+            config.adapter = () => {
+                return Promise.resolve({
+                    data: cachedResponse.data,
+                    status: 200,
+                    statusText: 'OK',
+                    headers: {},
+                    config: config,
+                    request: {}
+                });
+            };
         }
     }
     
-    // Yoksa yeni istek yap
-    try {
-        const response = await axiosGet.apply(this, args);
-        
-        // Önbelleğe al
-        cache.set(cacheKey, {
-            data: response,
+    return config;
+});
+
+window.axios.interceptors.response.use(response => {
+    // GET istekleri için önbelleğe al
+    if (response.config.method === 'get') {
+        const url = response.config.url + JSON.stringify(response.config.params || {});
+        cache.set(url, {
+            data: response.data,
             timestamp: Date.now()
         });
-        
-        return response;
-    } catch (error) {
-        throw error;
     }
-};
+    
+    return response;
+});
 
-// Import Echo and the Pusher library
+/**
+ * Echo kurulumu
+ */
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 
 window.Pusher = Pusher;
 
-// Hardcoded Pusher credentials (same as in .env)
-const PUSHER_KEY = '805676c1218fb0333ec3';
-const PUSHER_CLUSTER = 'eu';
+// Pusher kimlik bilgileri
+const pusherAppKey = import.meta.env.VITE_PUSHER_APP_KEY || '805676c1218fb0333ec3';
+const pusherAppCluster = import.meta.env.VITE_PUSHER_APP_CLUSTER || 'eu';
 
-// Debug info
-console.log('Pusher Key:', PUSHER_KEY);
-console.log('Pusher Cluster:', PUSHER_CLUSTER);
+console.log('Pusher Kurulumu:', { 
+    key: pusherAppKey, 
+    cluster: pusherAppCluster 
+});
 
-// Echo ayarlarını yap - Doğrudan Pusher servisi kullanılıyor
+// Echo bağlantısı
 window.Echo = new Echo({
     broadcaster: 'pusher',
-    key: PUSHER_KEY,
-    cluster: PUSHER_CLUSTER,
-    forceTLS: true,
-    authEndpoint: '/broadcasting/auth',  // Göreli URL kullan (aynı origin)
-    auth: {
-        headers: {
-            'X-CSRF-TOKEN': token ? token.content : '',
-        },
-    },
+    key: pusherAppKey,
+    cluster: pusherAppCluster,
+    wsHost: window.location.hostname,
+    wsPort: 6001,
+    forceTLS: false,
+    disableStats: true,
+    enabledTransports: ['ws', 'wss'],
 });

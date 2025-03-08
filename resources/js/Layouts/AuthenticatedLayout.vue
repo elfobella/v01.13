@@ -6,6 +6,7 @@ import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
 import { Link } from '@inertiajs/vue3';
+import GlobalNotification from '@/Components/GlobalNotification.vue';
 
 const showingNavigationDropdown = ref(false);
 </script>
@@ -188,6 +189,9 @@ const showingNavigationDropdown = ref(false);
                     <slot name="header" />
                 </div>
             </header>
+
+            <!-- Global Bildirim Bileşeni -->
+            <GlobalNotification />
 
             <!-- Page Content -->
             <main>

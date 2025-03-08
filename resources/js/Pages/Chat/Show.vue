@@ -112,6 +112,9 @@ onMounted(() => {
         }
     });
     
+    // Aktif sohbet ID'sini global değişkene ata
+    window.activeChatId = props.chat.id;
+    
     // Bu sohbetle ilgili bildirimleri okundu olarak işaretle
     markChatNotificationsAsRead();
     
@@ -183,9 +186,10 @@ const setActiveChatStatus = async (isActive) => {
     }
 };
 
-// Bileşen kaldırıldığında aktif sohbet durumunu temizle
+// Bileşen kaldırıldığında aktif sohbet durumunu ve ID'sini temizle
 onUnmounted(() => {
     setActiveChatStatus(false);
+    window.activeChatId = null;
 });
 
 // Bu sohbetle ilgili bildirimleri okundu olarak işaretle
