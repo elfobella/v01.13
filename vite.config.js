@@ -18,7 +18,26 @@ export default defineConfig({
         }),
     ],
     define: {
-        'import.meta.env.VITE_PUSHER_APP_KEY': JSON.stringify('805676c1218fb0333ec3'),
-        'import.meta.env.VITE_PUSHER_APP_CLUSTER': JSON.stringify('eu'),
+        'import.meta.env.VITE_PUSHER_APP_KEY': JSON.stringify(process.env.VITE_PUSHER_APP_KEY || '805676c1218fb0333ec3'),
+        'import.meta.env.VITE_PUSHER_APP_CLUSTER': JSON.stringify(process.env.VITE_PUSHER_APP_CLUSTER || 'eu'),
+    },
+    build: {
+        // Production build optimizations
+        chunkSizeWarningLimit: 1000,
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    vendor: ['vue', 'axios', 'lodash', 'pusher-js'],
+                }
+            }
+        },
+        // Enable minification
+        minify: 'terser',
+        terserOptions: {
+            compress: {
+                drop_console: true,
+                drop_debugger: true,
+            },
+        },
     },
 });

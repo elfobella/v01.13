@@ -19,7 +19,15 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:8000'],
+    'allowed_origins' => [
+        'http://localhost:8000', 
+        'https://localhost:8000',
+        'http://v01-13.com', 
+        'https://v01-13.com',
+        'http://www.v01-13.com', 
+        'https://www.v01-13.com',
+        env('APP_URL', 'http://localhost:8000')
+    ],
 
     'allowed_origins_patterns' => [],
 

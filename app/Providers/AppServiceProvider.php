@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Session;
@@ -22,6 +23,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Production ortamında HTTPS kullanımını zorunlu kıl
+        if (app()->environment('production')) {
+            URL::forceScheme('https');
+        }
+        
         Vite::prefetch(concurrency: 3);
         
         // CSRF token'ı Inertia ile paylaş

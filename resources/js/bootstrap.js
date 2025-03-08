@@ -10,7 +10,10 @@ window.activeChatId = null;
  * Axios HTTP kütüphanesini kurulumu ve yapılandırması
  */
 window.axios = axios;
-window.axios.defaults.baseURL = import.meta.env.VITE_APP_URL || 'http://localhost:8000';
+
+// Dinamik olarak baz URL'yi belirle (production için APP_URL, development için localhost)
+const appUrl = import.meta.env.VITE_APP_URL || document.head.querySelector('meta[name="app-url"]')?.content || window.location.origin;
+window.axios.defaults.baseURL = appUrl;
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 window.axios.defaults.withCredentials = true;
 
@@ -78,10 +81,13 @@ window.Pusher = Pusher;
 const pusherAppKey = import.meta.env.VITE_PUSHER_APP_KEY || '805676c1218fb0333ec3';
 const pusherAppCluster = import.meta.env.VITE_PUSHER_APP_CLUSTER || 'eu';
 
-console.log('Pusher Kurulumu:', { 
-    key: pusherAppKey, 
-    cluster: pusherAppCluster 
-});
+// Production ortamında console.log kaldırıldı
+if (import.meta.env.MODE !== 'production') {
+    console.log('Pusher Kurulumu:', { 
+        key: pusherAppKey, 
+        cluster: pusherAppCluster 
+    });
+}
 
 // Echo bağlantısı
 window.Echo = new Echo({
