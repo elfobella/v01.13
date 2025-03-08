@@ -88,9 +88,7 @@ window.Echo = new Echo({
     broadcaster: 'pusher',
     key: pusherAppKey,
     cluster: pusherAppCluster,
-    wsHost: window.location.hostname,
-    wsPort: 6001,
-    forceTLS: false,
+    forceTLS: true,
+    encrypted: true,
     disableStats: true,
-    enabledTransports: ['ws', 'wss'],
 });
